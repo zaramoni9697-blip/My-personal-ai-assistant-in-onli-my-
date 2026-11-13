@@ -1,9 +1,12 @@
 package com.mdfoysal.jarvis
 
-import android.content.Intent
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -20,19 +23,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.map
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -51,7 +61,6 @@ import com.mdfoysal.jarvis.feature.providers.ProvidersViewModel
 import com.mdfoysal.jarvis.feature.settings.PhoneControlScreen
 import com.mdfoysal.jarvis.feature.settings.SettingsScreen
 import com.mdfoysal.jarvis.feature.settings.SettingsViewModel
-import com.mdfoysal.jarvis.feature.voice.WakeWordService
 import com.mdfoysal.jarvis.ui.JarvisViewModelFactories
 import com.mdfoysal.jarvis.ui.components.JarvisCore
 import com.mdfoysal.jarvis.ui.components.CoreState
@@ -70,7 +79,7 @@ class MainActivity : ComponentActivity() {
         val container = (application as JarvisApp).container
         setContent {
             JarvisTheme {
-                JarvisRoot(container = container, wakeIntent = intent)
+                JarvisRoot(container = container)
             }
         }
     }
@@ -84,7 +93,7 @@ private sealed interface SessionState {
 }
 
 @Composable
-private fun JarvisRoot(container: AppContainer, wakeIntent: Intent?) {
+private fun JarvisRoot(container: AppContainer) {
     val sessionState by container.authRepository.session
         .map { session ->
             if (session == null) SessionState.SignedOut else SessionState.SignedIn(session.userId)
@@ -93,13 +102,28 @@ private fun JarvisRoot(container: AppContainer, wakeIntent: Intent?) {
 
     when (val current = sessionState) {
         is SessionState.Loading -> JarvisSplashScreen()
-        is SessionState.SignedOut -> AuthGraph(container)
-        is SessionState.SignedIn -> MainGraph(
-            container = container,
-            userId = current.userId,
-            wakeTriggered = wakeIntent?.getBooleanExtra(WakeWordService.EXTRA_WAKE_TRIGGERED, false) == true
-        )
+        is SessionState.SignedOut -> SessionViewModels { AuthGraph(container) }
+        is SessionState.SignedIn -> SessionViewModels(current.userId) {
+            MainGraph(
+                container = container,
+                userId = current.userId
+            )
+        }
     }
+}
+
+/** Keep user-specific ViewModels out of the activity-wide store and clear them on logout. */
+@Composable
+private fun SessionViewModels(key: String = "signed-out", content: @Composable () -> Unit) {
+    val owner = remember(key) {
+        object : ViewModelStoreOwner {
+            override val viewModelStore = ViewModelStore()
+        }
+    }
+    DisposableEffect(owner) {
+        onDispose { owner.viewModelStore.clear() }
+    }
+    CompositionLocalProvider(LocalViewModelStoreOwner provides owner, content = content)
 }
 
 @Composable
@@ -181,7 +205,7 @@ private fun AuthGraph(container: AppContainer) {
 }
 
 @Composable
-private fun MainGraph(container: AppContainer, userId: String, wakeTriggered: Boolean) {
+private fun MainGraph(container: AppContainer, userId: String) {
     val navController = rememberNavController()
     val providersViewModel: ProvidersViewModel = viewModel(factory = JarvisViewModelFactories.providers(container))
     val chatViewModel: ChatViewModel = viewModel(factory = JarvisViewModelFactories.chat(container))
@@ -199,11 +223,12 @@ private fun MainGraph(container: AppContainer, userId: String, wakeTriggered: Bo
         }
     }
 
-    LaunchedEffect(wakeTriggered) {
-        if (wakeTriggered) {
-            chatViewModel.startListening()
-        }
-    }
+    // MainActivity is exported: never start the microphone based on an untrusted intent.
+    // Wake-word handoff needs a user-approved notification flow before it can be enabled.
+    val context = LocalContext.current
+    val microphonePermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted -> if (granted) chatViewModel.startListening() }
 
     NavHost(navController = navController, startDestination = Routes.CHAT) {
         composable(Routes.CHAT) {
@@ -211,7 +236,13 @@ private fun MainGraph(container: AppContainer, userId: String, wakeTriggered: Bo
                 state = chatState,
                 onInputChange = chatViewModel::onInputChange,
                 onSend = chatViewModel::send,
-                onStartListening = chatViewModel::startListening,
+                onStartListening = {
+                    if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                        chatViewModel.startListening()
+                    } else {
+                        microphonePermission.launch(Manifest.permission.RECORD_AUDIO)
+                    }
+                },
                 onStopListening = chatViewModel::stopListening,
                 onStopSpeaking = chatViewModel::stopSpeaking,
                 onConfirmCommand = chatViewModel::confirmCommand,
@@ -287,15 +318,15 @@ private fun MainGraph(container: AppContainer, userId: String, wakeTriggered: Bo
         composable(Routes.SETTINGS) {
             SettingsScreen(
                 state = settingsState,
-                onLanguageChange = settingsViewModel::setLanguage,
-                onTtsEnabledChange = settingsViewModel::setTtsEnabled,
-                onTtsRateChange = settingsViewModel::setTtsRate,
-                onVoiceModeChange = settingsViewModel::setVoiceMode,
-                onWakeWordEnabledChange = settingsViewModel::setWakeWordEnabled,
-                onWakeWordPhraseChange = settingsViewModel::setWakeWordPhrase,
-                onMemoryEnabledChange = settingsViewModel::setMemoryEnabled,
-                onAddMemory = settingsViewModel::addMemory,
-                onDeleteMemory = settingsViewModel::deleteMemory,
+                onLanguageChange = { settingsViewModel.setLanguage(it) },
+                onTtsEnabledChange = { settingsViewModel.setTtsEnabled(it) },
+                onTtsRateChange = { settingsViewModel.setTtsRate(it) },
+                onVoiceModeChange = { settingsViewModel.setVoiceMode(it) },
+                onWakeWordEnabledChange = { settingsViewModel.setWakeWordEnabled(it) },
+                onWakeWordPhraseChange = { settingsViewModel.setWakeWordPhrase(it) },
+                onMemoryEnabledChange = { settingsViewModel.setMemoryEnabled(it) },
+                onAddMemory = { settingsViewModel.addMemory(it) },
+                onDeleteMemory = { settingsViewModel.deleteMemory(it) },
                 onOpenProviders = { navController.navigate(Routes.PROVIDERS) },
                 onOpenPhoneControl = { navController.navigate(Routes.PHONE) },
                 onLogout = { settingsViewModel.logout { } },

@@ -145,33 +145,11 @@ fun SettingsScreen(
                         )
                     }
                     Spacer(Modifier.height(6.dp))
-                    SwitchRow(
-                        title = "Voice conversation mode",
-                        subtitle = "Keep the microphone ready for the next question",
-                        checked = state.settings.voiceMode,
-                        onCheckedChange = onVoiceModeChange
+                    Text(
+                        "Continuous voice mode and wake-word listening are not available yet. Use the microphone button for individual requests.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = JarvisTextSecondary
                     )
-                    Spacer(Modifier.height(6.dp))
-                    SwitchRow(
-                        title = "Wake word",
-                        subtitle = "Listen for the wake phrase in a visible foreground service",
-                        checked = state.settings.wakeWordEnabled,
-                        onCheckedChange = onWakeWordEnabledChange
-                    )
-                    if (state.settings.wakeWordEnabled) {
-                        Spacer(Modifier.height(10.dp))
-                        OutlinedTextField(
-                            value = state.settings.wakeWordPhrase,
-                            onValueChange = onWakeWordPhraseChange,
-                            label = { Text("Wake phrase") },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = JarvisHoloBlue,
-                                unfocusedBorderColor = JarvisHoloBlue.copy(alpha = 0.35f)
-                            )
-                        )
-                    }
                 }
             }
             Spacer(Modifier.height(14.dp))

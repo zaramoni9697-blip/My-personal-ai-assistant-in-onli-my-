@@ -37,9 +37,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Sign with the debug key so `assembleRelease` produces an installable APK
-            // out of the box. Replace with a real upload key before publishing.
-            signingConfig = signingConfigs.getByName("debug")
+            // Release builds are unsigned until a deployment-specific signing configuration is provided.
         }
     }
 

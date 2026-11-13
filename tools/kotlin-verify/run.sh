@@ -33,7 +33,7 @@ java -cp "$KC_LIB/kotlin-compiler.jar:$KC_LIB/kotlin-stdlib.jar:$KC_LIB/kotlin-r
   org.jetbrains.kotlin.cli.jvm.K2JVMCompiler \
   -nowarn \
   -cp "$KC_LIB/kotlin-stdlib.jar:$KC_LIB/kotlinx-coroutines-core-jvm.jar" \
-  "${CORE_ONLY[@]}" "${TEST_SOURCES[@]}" \
+  "${CORE_ONLY[@]}" "$CORE_DIR/com/mdfoysal/jarvis/data/remote/JarvisBackendClient.kt" "${TEST_SOURCES[@]}" \
   -d "$OUT_DIR/classes"
 
 echo "Running verification suite ..."

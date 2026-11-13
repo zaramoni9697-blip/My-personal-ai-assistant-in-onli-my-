@@ -33,7 +33,8 @@ object JarvisViewModelFactories {
                 providerRepository = container.providerRepository,
                 authRepository = container.authRepository,
                 settingsRepository = container.settingsRepository,
-                sessionManager = container.sessionManager
+                sessionManager = container.sessionManager,
+                context = container.appContext
             )
         }
     }

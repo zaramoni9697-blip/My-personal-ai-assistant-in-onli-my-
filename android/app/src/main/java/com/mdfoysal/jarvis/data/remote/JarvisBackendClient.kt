@@ -7,6 +7,7 @@ import com.mdfoysal.jarvis.core.net.HttpRequest
 import com.mdfoysal.jarvis.core.net.HttpTransport
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.net.URI
 
 /**
  * Client for the optional JARVIS backend (`web/server`).
@@ -37,7 +38,7 @@ class JarvisBackendClient(
             .put("password", password)
             .put("displayName", displayName)
             .build()
-    )
+    ).mapCatching(::parseAuthResponse)
 
     suspend fun login(email: String, password: String): Result<AuthResponse> = post(
         path = "/api/auth/login",
@@ -45,7 +46,7 @@ class JarvisBackendClient(
             .put("email", email)
             .put("password", password)
             .build()
-    )
+    ).mapCatching(::parseAuthResponse)
 
     suspend fun requestPasswordReset(email: String): Result<String> = post(
         path = "/api/auth/forgot-password",
@@ -68,6 +69,18 @@ class JarvisBackendClient(
         method = "DELETE"
     )
 
+    private fun parseAuthResponse(body: String): AuthResponse {
+        val json = Json.parseOrNull(body) ?: error("Invalid authentication response")
+        val id = json.optString("user.id")
+        val email = json.optString("user.email")
+        val name = json.optString("user.displayName")
+        val token = json.optString("token")
+        require(id.isNotBlank() && email.isNotBlank() && token.isNotBlank()) {
+            "Incomplete authentication response"
+        }
+        return AuthResponse(id, email, name, token)
+    }
+
     private suspend fun post(
         path: String,
         body: JsonValue,
@@ -75,8 +88,11 @@ class JarvisBackendClient(
         method: String = "POST"
     ): Result<String> = withContext(Dispatchers.IO) {
         val base = baseUrlProvider().trim().trimEnd('/')
-        if (base.isEmpty()) {
-            return@withContext Result.failure(IllegalStateException("Backend URL is not configured"))
+        val uri = runCatching { URI(base) }.getOrNull()
+        if (uri == null || uri.scheme != "https" || uri.host.isNullOrBlank() ||
+            uri.userInfo != null || uri.query != null || uri.fragment != null
+        ) {
+            return@withContext Result.failure(IllegalStateException("Configure a valid HTTPS backend URL"))
         }
         val headers = LinkedHashMap<String, String>()
         headers["Content-Type"] = "application/json"
@@ -94,6 +110,7 @@ class JarvisBackendClient(
             val parsed = Json.parseOrNull(response.body)
             val message = parsed?.optString("error")?.ifBlank { null }
                 ?: parsed?.optString("message")
+                ?: response.errorMessage?.takeIf { it.isNotBlank() }
                 ?: "Request failed (HTTP ${response.code})"
             return@withContext Result.failure(IllegalStateException(message))
         }

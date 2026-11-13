@@ -38,11 +38,6 @@ class SpeechRecognizerController(
     val isAvailable: Boolean
         get() = SpeechRecognizer.isRecognitionAvailable(context)
 
-    /** Languages supported by the device recogniser (used by the settings screen). */
-    fun supportedLanguages(): Set<Locale> = runCatching {
-        SpeechRecognizer.getSupportedLanguages(context)
-    }.getOrDefault(emptySet())
-
     /** Starts listening in the given language. Bengali and English are both supported. */
     fun start(language: AssistantLanguage = AssistantLanguage.ENGLISH) {
         if (!isAvailable) {

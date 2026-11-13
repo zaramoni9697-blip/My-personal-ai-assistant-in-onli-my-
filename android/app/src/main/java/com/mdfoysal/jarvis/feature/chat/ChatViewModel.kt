@@ -151,7 +151,8 @@ class ChatViewModel(
         }
 
         viewModelScope.launch {
-            providerRepository.observeActive(userId).collect { active ->
+            val session = sessionManager.session.first() ?: return@launch
+            providerRepository.observeActive(session.userId).collect { active ->
                 _state.update { it.copy(activeProvider = active, hasProvider = active != null) }
             }
         }
@@ -281,10 +282,12 @@ class ChatViewModel(
         if (_state.value.assistantState == AssistantState.SPEAKING) {
             stopSpeaking()
         }
-        val settings = runCatching { settingsRepository.settings.first() }.getOrNull()
-        val language = languageFrom(settings?.language ?: "auto")
-        _state.update { it.copy(assistantState = AssistantState.LISTENING, partialSpeech = "", error = null) }
-        speechRecognizer.start(language)
+        viewModelScope.launch {
+            val settings = settingsRepository.settings.first()
+            val language = languageFrom(settings.language)
+            _state.update { it.copy(assistantState = AssistantState.LISTENING, partialSpeech = "", error = null) }
+            speechRecognizer.start(language)
+        }
     }
 
     fun stopListening() {
@@ -299,13 +302,14 @@ class ChatViewModel(
     }
 
     fun speak(text: String) {
-        val settings = runCatching { settingsRepository.settings.first() }.getOrNull()
-        if (settings?.ttsEnabled == false) {
-            _state.update { it.copy(assistantState = AssistantState.IDLE) }
-            return
+        viewModelScope.launch {
+            val settings = settingsRepository.settings.first()
+            if (!settings.ttsEnabled) {
+                _state.update { it.copy(assistantState = AssistantState.IDLE) }
+                return@launch
+            }
+            textToSpeech.speak(text, _state.value.language)
         }
-        val language = _state.value.language
-        textToSpeech.speak(text, language)
     }
 
     /** Clears the current conversation (messages are deleted from the device). */

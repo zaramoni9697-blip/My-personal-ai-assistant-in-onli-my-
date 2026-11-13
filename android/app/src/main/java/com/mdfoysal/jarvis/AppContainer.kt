@@ -28,7 +28,7 @@ import kotlinx.coroutines.flow.stateIn
  */
 class AppContainer(context: Context) {
 
-    private val appContext = context.applicationContext
+    val appContext: Context = context.applicationContext
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     val database: JarvisDatabase by lazy { JarvisDatabase.build(appContext) }

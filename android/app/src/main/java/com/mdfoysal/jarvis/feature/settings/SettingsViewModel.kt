@@ -49,6 +49,11 @@ class SettingsViewModel(
 
     init {
         viewModelScope.launch {
+            settingsRepository.settings.collect { settings ->
+                _state.update { it.copy(settings = settings) }
+            }
+        }
+        viewModelScope.launch {
             val session = sessionManager.session.first()
             if (session == null) return@launch
             userId = session.userId

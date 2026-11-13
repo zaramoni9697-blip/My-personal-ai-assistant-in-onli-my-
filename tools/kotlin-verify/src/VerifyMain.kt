@@ -19,6 +19,7 @@ fun main(args: Array<String>) {
     CoreChecks.run(providersJson.path)
     ProviderChecks.run(providersJson.path)
     IntegrationChecks.run(providersJson.path)
+    BackendClientChecks.run()
 
     TestKit.exitWithReport()
 }
