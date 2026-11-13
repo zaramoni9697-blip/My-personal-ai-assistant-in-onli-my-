@@ -1,0 +1,23 @@
+# Android / Gradle
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.iml
+android/captures/
+.externalNativeBuild/
+.cxx/
+
+# Node / Web
+node_modules/
+web/server/data/
+web/client/dist/
+web/client/.vite/
+npm-debug.log*
+yarn-error.log*
+
+# Tooling
+tools/kotlin-verify/out/
+*.log
+.DS_Store
