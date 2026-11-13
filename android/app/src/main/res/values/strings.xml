@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">JARVIS AI</string>
+    <string name="creator">Md Foysal</string>
+    <string name="wake_word">সবসময় প্রস্তুত</string>
+</resources>
