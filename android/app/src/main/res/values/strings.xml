@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">JARVIS AI</string>
+    <string name="app_tagline">Personal AI Assistant</string>
+    <string name="created_by">Created by Md Foysal</string>
+    <string name="creator_credit">Md Foysal</string>
+
+    <!-- Auth -->
+    <string name="login_title">Welcome back</string>
+    <string name="login_subtitle">Sign in to your JARVIS AI workspace</string>
+    <string name="signup_title">Create your account</string>
+    <string name="signup_subtitle">Start your own private JARVIS AI workspace</string>
+    <string name="forgot_password_title">Reset password</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="confirm_password">Confirm password</string>
+    <string name="display_name">Display name</string>
+    <string name="sign_in">Sign in</string>
+    <string name="sign_up">Create account</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="reset_password">Reset password</string>
+    <string name="no_account_sign_up">No account? Create one</string>
+    <string name="have_account_sign_in">Already have an account? Sign in</string>
+    <string name="show_password">Show password</string>
+    <string name="hide_password">Hide password</string>
+    <string name="logout">Log out</string>
+
+    <!-- Providers -->
+    <string name="providers_title">AI Provider Setup</string>
+    <string name="providers_subtitle">Your keys are encrypted on this device. Add one or more providers and pick the active one.</string>
+    <string name="add_provider">Add provider</string>
+    <string name="edit_provider">Edit provider</string>
+    <string name="delete_provider">Delete</string>
+    <string name="test_connection">Test connection</string>
+    <string name="save_configuration">Save configuration</string>
+    <string name="api_key">API key</string>
+    <string name="model_id">Model ID</string>
+    <string name="base_url">API base URL</string>
+    <string name="endpoint_path">Endpoint path</string>
+    <string name="nickname">Configuration name</string>
+    <string name="set_active">Set as active</string>
+    <string name="active_provider">Active</string>
+    <string name="connection_ok">Connection successful</string>
+    <string name="connection_failed">Connection failed</string>
+
+    <!-- Chat -->
+    <string name="chat_title">JARVIS</string>
+    <string name="chat_hint">Ask JARVIS anything…</string>
+    <string name="send">Send</string>
+    <string name="stop_speaking">Stop speaking</string>
+    <string name="start_listening">Start listening</string>
+    <string name="voice_mode">Voice mode</string>
+    <string name="clear_conversation">Clear conversation</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="phone_control">Phone control</string>
+    <string name="providers_section">Providers</string>
+    <string name="voice_section">Voice</string>
+    <string name="data_section">Data &amp; privacy</string>
+    <string name="delete_account">Delete account</string>
+
+    <!-- Notifications / services -->
+    <string name="wake_word_channel">Wake word</string>
+    <string name="wake_word_channel_description">Shows that JARVIS is listening for the wake word</string>
+    <string name="jarvis_notification_listener_label">JARVIS AI notification reader</string>
+    <string name="wake_word_notification_title">JARVIS AI is listening</string>
+    <string name="wake_word_notification_text">Say “সবসময় প্রস্তুত” to wake JARVIS</string>
+</resources>

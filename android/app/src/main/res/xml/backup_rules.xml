@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Secrets (encrypted credentials) and the local database are never backed up. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="jarvis_secure_credentials.xml" />
+    <exclude domain="database" path="jarvis.db" />
+    <exclude domain="file" path="datastore/jarvis_settings.preferences_pb" />
+</full-backup-content>
